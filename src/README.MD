@@ -1,18 +1,21 @@
-Gerador de Escalas Automáticas
+# Python Shift Scheduler
 
-Projeto em Python que gera automaticamente escalas de trabalho para uma loja com regras específicas.
+Sistema em Python para gerar automaticamente escalas mensais de trabalho.
 
-## Funcionalidades
+## Regras implementadas
 
-- Geração automática de escala mensal
-- Balanceamento de turnos entre operadores
-- Exportação da escala para Excel
+- 1 gerente fixo em dias úteis
+- 3 operadores
+- Turnos de abertura e fecho
+- Fins de semana sempre com 2 operadores
+- Balanceamento de horas mensais
 
 ## Tecnologias
 
 - Python
 - OpenPyXL
+- Estrutura modular
 
-## Autor
+## Objetivo
 
-Daniel Viana
+Automatizar a geração de escalas mensais para reduzir trabalho manual.
