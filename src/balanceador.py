@@ -23,88 +23,158 @@ def calcular_meta_horas(ano, mes):
 
 def calcular_horas_operadores(escala):
 
-    horas = {}
+    horas = {
+        "Sofia": 0,
+        "Jorge": 0,
+        "Viviane": 0,
+        "Daniel": 0
+    }
 
     for dia in escala:
 
-        abertura = dia["abertura"]
-        fecho = dia["fecho"]
+        ab = dia.get("abertura")
+        fe = dia.get("fecho")
+        fx = dia.get("fecho_extra")
 
-        horas_abertura = dia.get("abertura_horas", 12)
-        horas_fecho = dia.get("fecho_horas", 12)
+        if ab:
+            horas[ab] += dia.get("abertura_horas", 11)
 
-        horas[abertura] = horas.get(abertura, 0) + horas_abertura
-        horas[fecho] = horas.get(fecho, 0) + horas_fecho
+        if fe:
+            horas[fe] += dia.get("fecho_horas", 11)
+
+        if fx:
+            horas[fx] += dia.get("fecho_extra_horas", 11)
 
     return horas
-
 
 def rebalancear_horas(escala, ano, mes):
 
     meta = calcular_meta_horas(ano, mes)
 
-    horas = calcular_horas_operadores(escala)
+    while True:
 
-    for operador, total in horas.items():
+        horas = calcular_horas_operadores(escala)
 
-        excesso = total - meta
+        mudou = False
 
-        if excesso <= 0:
-            continue
+        abaixo = [op for op, h in horas.items() if h < meta]
+        acima = [op for op, h in horas.items() if h > meta]
 
-        for dia in escala:
+        # ------------------------------------------------
+        # REGRA 1 — REDISTRIBUIR TURNOS
+        # ------------------------------------------------
 
-            if excesso <= 0:
+        for op_baixo in abaixo:
+
+            for op_alto in acima:
+
+                for dia in escala:
+
+                    if (
+                        dia.get("fecho") == op_alto
+                        and dia.get("abertura") != op_baixo
+                    ):
+
+                        dia["fecho"] = op_baixo
+                        dia["fecho_turno"] = "11:00-23:00"
+                        dia["fecho_horas"] = 11
+
+                        mudou = True
+                        break
+
+                if mudou:
+                    break
+
+            if mudou:
                 break
 
-            # abertura
-            if dia["abertura"] == operador:
+        if mudou:
+            continue
 
-                h = dia.get("abertura_horas", 12)
+        # ------------------------------------------------
+        # REGRA 2 — FALTANDO >= 8 HORAS
+        # ------------------------------------------------
 
-                reducao = min(2, excesso)
+        for op_baixo in abaixo:
 
-                novo_h = h - reducao
+            faltando = meta - horas[op_baixo]
 
-                if novo_h < 8:
-                    continue
+            if faltando >= 8:
 
-                dia["abertura_horas"] = novo_h
+                for dia in escala:
 
-                if novo_h == 11:
-                    dia["abertura_turno"] = "09:30-20:30"
-                elif novo_h == 10:
-                    dia["abertura_turno"] = "09:30-19:30"
-                elif novo_h == 9:
-                    dia["abertura_turno"] = "09:30-18:30"
-                elif novo_h == 8:
-                    dia["abertura_turno"] = "09:30-17:30"
+                    if (
+                        "fecho_extra" not in dia
+                        and dia.get("abertura") != op_baixo
+                        and dia.get("fecho") != op_baixo
+                    ):
 
-                excesso -= reducao
+                        dia["fecho_extra"] = op_baixo
+                        dia["fecho_extra_turno"] = "11:00-23:00"
+                        dia["fecho_extra_horas"] = 11
 
-            # fecho
-            elif dia["fecho"] == operador:
+                        mudou = True
+                        break
 
-                h = dia.get("fecho_horas", 12)
+                if mudou:
+                    break
 
-                reducao = min(2, excesso)
+        if mudou:
+            continue
 
-                novo_h = h - reducao
+        # ------------------------------------------------
+        # REGRA 3 — AJUSTE FINO
+        # ------------------------------------------------
 
-                if novo_h < 8:
-                    continue
+        for operador, total in horas.items():
 
-                dia["fecho_horas"] = novo_h
+            diferenca = meta - total
 
-                if novo_h == 11:
-                    dia["fecho_turno"] = "12:00-23:00"
-                elif novo_h == 10:
-                    dia["fecho_turno"] = "13:00-23:00"
-                elif novo_h == 9:
-                    dia["fecho_turno"] = "14:00-23:00"
-                elif novo_h == 8:
-                    dia["fecho_turno"] = "15:00-23:00"
+            if diferenca > 0:
 
-                excesso -= reducao
+                for dia in escala:
+
+                    if dia.get("fecho") == operador:
+
+                        if dia.get("fecho_horas", 11) == 11:
+
+                            dia["fecho_horas"] = 12
+                            dia["fecho_turno"] = "10:00-23:00"
+
+                            mudou = True
+                            break
+
+                if mudou:
+                    break
+
+            elif diferenca < 0:
+
+                for dia in escala:
+
+                    if dia.get("fecho") == operador:
+
+                        h = dia.get("fecho_horas", 11)
+
+                        novo = max(8, h - 1)
+
+                        if novo != h:
+
+                            dia["fecho_horas"] = novo
+
+                            if novo == 10:
+                                dia["fecho_turno"] = "12:00-23:00"
+                            elif novo == 9:
+                                dia["fecho_turno"] = "13:00-23:00"
+                            elif novo == 8:
+                                dia["fecho_turno"] = "14:00-23:00"
+
+                            mudou = True
+                            break
+
+                if mudou:
+                    break
+
+        if not mudou:
+            break
 
     return escala

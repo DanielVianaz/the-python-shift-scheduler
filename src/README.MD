@@ -1,4 +1,4 @@
-# Gerador de Escalas Automáticas
+Gerador de Escalas Automáticas
 
 Projeto em Python que gera automaticamente escalas de trabalho para uma loja com regras específicas.
 

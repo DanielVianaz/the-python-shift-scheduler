@@ -11,8 +11,6 @@ def gerar_excel(escala, nome_arquivo="escala.xlsx"):
 
     operadores = ["Sofia", "Jorge", "Viviane", "Daniel"]
 
-    # - ESTILOS
-
     header_fill = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")
     total_fill = PatternFill(start_color="EFEFEF", end_color="EFEFEF", fill_type="solid")
 
@@ -22,8 +20,6 @@ def gerar_excel(escala, nome_arquivo="escala.xlsx"):
 
     thin = Side(style="thin")
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
-
-    # - CABEÇALHO
 
     cabecalho = [
         "Dia",
@@ -44,11 +40,7 @@ def gerar_excel(escala, nome_arquivo="escala.xlsx"):
         cell.alignment = center
         cell.border = border
 
-    # - CONTADOR HORAS
-
     horas = {op: 0 for op in operadores}
-
-    # -ESCALA
 
     for i, dia in enumerate(escala, start=1):
 
@@ -63,7 +55,7 @@ def gerar_excel(escala, nome_arquivo="escala.xlsx"):
             op = dia["abertura"]
 
             horario = dia.get("abertura_turno", "09:30-21:30")
-            h = dia.get("abertura_horas", 12)
+            h = dia.get("abertura_horas", 11)
 
             turnos[op] = horario
             horas_dia[op] = h
@@ -75,7 +67,7 @@ def gerar_excel(escala, nome_arquivo="escala.xlsx"):
             op = dia["fecho"]
 
             horario = dia.get("fecho_turno", "11:00-23:00")
-            h = dia.get("fecho_horas", 12)
+            h = dia.get("fecho_horas", 11)
 
             turnos[op] = horario
             horas_dia[op] = h
@@ -88,16 +80,12 @@ def gerar_excel(escala, nome_arquivo="escala.xlsx"):
 
         ws.append(linha)
 
-    # - BORDAS NA TABELA
-
     max_row = ws.max_row
 
     for row in ws.iter_rows(min_row=1, max_row=max_row, min_col=1, max_col=9):
         for cell in row:
             cell.border = border
             cell.alignment = center
-
-    # - LINHA TOTAL
 
     linha_total = ws.max_row + 1
 
@@ -123,8 +111,6 @@ def gerar_excel(escala, nome_arquivo="escala.xlsx"):
 
         col += 2
 
-    # - LARGURA DAS COLUNAS
-
     ws.column_dimensions["A"].width = 6
 
     for col in ["B", "D", "F", "H"]:
@@ -132,8 +118,6 @@ def gerar_excel(escala, nome_arquivo="escala.xlsx"):
 
     for col in ["C", "E", "G", "I"]:
         ws.column_dimensions[col].width = 8
-
-    # - SALVAR
 
     wb.save(nome_arquivo)
 
